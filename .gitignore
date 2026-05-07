@@ -1,0 +1,10 @@
+# Python virtual environment and cache files
+venv/
+__pycache__/
+*.py[cod]
+
+# Mac system files
+.DS_Store
+
+# Application temporary files
+uploads/

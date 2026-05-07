@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resimden Metin Çıkarıcı (OCR)</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #f4f4f9;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        h1 {
+            color: #444;
+        }
+        #drop-zone {
+            width: 80%;
+            max-width: 600px;
+            height: 200px;
+            border: 3px dashed #ccc;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-size: 1.2em;
+            color: #aaa;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        #drop-zone.dragover {
+            border-color: #3498db;
+            color: #3498db;
+            background-color: #f0f8ff;
+        }
+        #result-container {
+            width: 80%;
+            max-width: 600px;
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            white-space: pre-wrap; /* Preserves line breaks and spaces */
+            word-wrap: break-word;
+            min-height: 50px;
+            color: #555;
+        }
+        #status {
+            margin-top: 15px;
+            font-style: italic;
+            color: #888;
+        }
+        .button-container {
+            display: flex;
+            gap: 15px;
+            margin-top: 15px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 1em;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>Resmi Buraya Sürükleyip Bırakın</h1>
+    <div id="drop-zone">
+        <p>Resim dosyasını sürükleyin veya buraya tıklayarak seçin</p>
+    </div>
+    <input type="file" id="file-input" accept="image/*" style="display: none;">
+    <div id="status"></div>
+    <div class="button-container">
+        <button id="btn-ocr" style="background-color: #3498db; color: white;">Normal OCR (Yerel)</button>
+        <button id="btn-ai" style="background-color: #9b59b6; color: white;">Yapay Zeka (Gemini API)</button>
+    </div>
+    <h2>Çıkarılan Metin:</h2>
+    <pre id="result-container">Sonuç burada görünecek...</pre>
+
+    <script>
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+        const resultContainer = document.getElementById('result-container');
+        const statusDiv = document.getElementById('status');
+
+        let selectedFile = null;
+
+        dropZone.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', () => {
+            if (fileInput.files.length > 0) {
+                selectedFile = fileInput.files[0];
+                statusDiv.textContent = 'Resim seçildi: ' + selectedFile.name + '. Lütfen bir yöntem seçin.';
+            }
+        });
+
+        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            if (e.dataTransfer.files.length > 0) {
+                selectedFile = e.dataTransfer.files[0];
+                statusDiv.textContent = 'Resim seçildi: ' + selectedFile.name + '. Lütfen bir yöntem seçin.';
+            }
+        });
+
+        document.getElementById('btn-ocr').addEventListener('click', () => { if(selectedFile) processFile(selectedFile, '/ocr'); else alert("Önce resim seçin!"); });
+        document.getElementById('btn-ai').addEventListener('click', () => { if(selectedFile) processFile(selectedFile, '/ai'); else alert("Önce resim seçin!"); });
+
+        function processFile(file, endpoint) {
+            statusDiv.textContent = 'Resim yükleniyor ve işleniyor...';
+            resultContainer.textContent = 'Lütfen bekleyin...';
+            const formData = new FormData();
+            formData.append('file', file);
+
+            fetch(endpoint, { method: 'POST', body: formData })
+                .then(response => response.json())
+                .then(data => {
+                    resultContainer.textContent = data.error ? `Hata: ${data.error}` : (data.text || 'Resimde metin bulunamadı.');
+                    statusDiv.textContent = data.error ? 'Hata!' : 'İşlem tamamlandı.';
+                })
+                .catch(error => {
+                    resultContainer.textContent = 'Sunucuya bağlanırken bir hata oluştu. Terminali kontrol edin.';
+                    statusDiv.textContent = 'Sunucu Hatası!';
+                });
+        }
+    </script>
+</body>
+</html>

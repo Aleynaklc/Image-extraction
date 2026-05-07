@@ -1,0 +1,7 @@
+pillow
+pytesseract
+opencv-python
+pyzbar
+pandas
+google-genai
+flask
